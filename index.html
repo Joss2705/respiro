@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Respiro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4FACFE">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <style>
+        :root {
+            --primary: #4facfe;
+            --secondary: #00f2fe;
+            --bg-inspire: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* Bleu frais */
+            --bg-expire: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);  /* Vert apaisant */
+            --dark: #263238;
+            --error: #d32f2f;
+        }
+
+        body {
+            margin: 0; font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-inspire); height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            transition: background 2s ease-in-out;
+            color: var(--dark); overflow: hidden; touch-action: manipulation;
+        }
+
+        .container {
+            width: 100%; max-width: 400px; height: 100%;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 15px; text-align: center;
+        }
+
+        .header { display: flex; justify-content: center; align-items: center; position: relative; }
+        h1 { font-weight: 200; letter-spacing: 4px; font-size: 20px; margin: 10px 0; }
+        
+        .science-trigger {
+            position: absolute; right: 0; background: white; border: none;
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 16px;
+        }
+
+        .settings {
+            background: rgba(255, 255, 255, 0.4); padding: 15px;
+            border-radius: 20px; backdrop-filter: blur(5px);
+        }
+
+        .modes-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; margin-top: 15px;
+        }
+
+        .mode-container { position: relative; }
+        .info-icon {
+            font-size: 9px; background: var(--dark); color: white;
+            border-radius: 50%; width: 14px; height: 14px;
+            display: inline-flex; align-items: center; justify-content: center;
+            position: absolute; top: -5px; right: -2px; cursor: help; z-index: 2;
+        }
+
+        .tooltip {
+            visibility: hidden; width: 145px; background-color: var(--dark);
+            color: #fff; text-align: center; border-radius: 6px; padding: 8px;
+            position: absolute; z-index: 10; bottom: 125%; left: 50%; transform: translateX(-50%);
+            opacity: 0; transition: opacity 0.3s; font-size: 10px; pointer-events: none;
+        }
+
+        .mode-container:hover .tooltip { visibility: visible; opacity: 1; }
+
+        .mode-btn {
+            width: 100%; background: white; border: 2px solid transparent;
+            padding: 12px 2px; border-radius: 12px; font-size: 9px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; color: #546e7a;
+        }
+
+        .mode-btn.active { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        .circle-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        #circle {
+            width: 150px; height: 150px;
+            background: radial-gradient(circle, var(--secondary), var(--primary));
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 40px rgba(79, 172, 254, 0.3);
+        }
+
+        #instruction { color: white; font-weight: bold; text-transform: uppercase; font-size: 14px; padding: 10px; }
+
+        .main-btn {
+            background: var(--dark); color: white; border: none;
+            padding: 16px; width: 100%; border-radius: 18px; font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+
+        .safety-bar {
+            font-size: 9px; color: var(--error); margin-top: 10px; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8;
+        }
+
+        #modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 25px; max-width: 350px;
+            max-height: 80vh; overflow-y: auto; text-align: left; position: relative;
+        }
+        .close-modal { position: absolute; top: 15px; right: 15px; border: none; background: #eee; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; }
+        .alert-box { background: #ffebee; border: 1px solid var(--error); padding: 12px; border-radius: 10px; color: var(--error); font-size: 11px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>RESPIRO</h1>
+        <button class="science-trigger" onclick="toggleModal(true)">💡</button>
+    </div>
+
+    <div class="settings" id="panel">
+        <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size: 12px;">
+            <span style="font-weight:bold;">DURÉE : <span id="dur-lab">5 min</span></span>
+            <input type="range" id="slider" min="1" max="20" value="5" style="flex-grow:1; margin-left:10px;">
+        </div>
+        
+        <div style="display:flex; justify-content:center; gap:10px; align-items:center; font-size: 12px; font-weight:bold; margin-bottom:10px;">
+            <span>SONS 🔔</span>
+            <input type="checkbox" id="sound-on" style="width:16px; height:16px;">
+        </div>
+
+        <div class="modes-grid">
+            <div class="mode-container">
+                <button class="mode-btn active" onclick="setMode('detente', this)">DÉTENTE</button>
+                <span class="info-icon">i</span>
+                <div class="tooltip">Calme profond : 4s d'inspiration / 8s d'expiration.</div>
+            </div>
+            <div class="mode-container">
+                <button class="mode-btn" onclick="setMode('sigh', this)">SOUPIR</button>
+                <span class="info-icon">i</span>
+                <div class="tooltip">Urgence stress : Double inspiration rapide, expiration très longue.</div>
+            </div>
+            <div class="mode-container">
+                <button class="mode-btn" onclick="setMode('coherence', this)">COHÉRENCE</button>
+                <span class="info-icon">i</span>
+                <div class="tooltip">Quotidien : 5s d'inspiration / 5s d'expiration.</div>
+            </div>
+            <div class="mode-container">
+                <button class="mode-btn" onclick="setMode('478', this)">4-7-8</button>
+                <span class="info-icon">i</span>
+                <div class="tooltip">Sommeil : 4s d'inspiration / 7s de blocage / 8s d'expiration.</div>
+            </div>
+            <div class="mode-container">
+                <button class="mode-btn" onclick="setMode('carree', this)">BOX</button>
+                <span class="info-icon">i</span>
+                <div class="tooltip">Focus : 4s par phase (Inspiration/Blocage/Expiration/Blocage).</div>
+            </div>
+            <div class="mode-container">
+                <button class="mode-btn" onclick="setMode('boxpro', this)">BOX PRO</button>
+                <span class="info-icon">i</span>
+                <div class="tooltip">Maîtrise : Carrée intense de 6s par phase.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="circle-area"><div id="circle"><span id="instruction">Prêt ?</span></div></div>
+
+    <div>
+        <div id="timer-display" style="font-size:28px; font-weight: 200; margin-bottom:5px;">05:00</div>
+        <button id="start-btn" class="main-btn" onclick="toggle()">DÉMARRER</button>
+        <div class="safety-bar">⚠️ Usage bien-être uniquement</div>
+    </div>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="toggleModal(false)">✕</button>
+        <h2 style="margin-top:0; font-size:18px; color:var(--primary);">Information Science</h2>
+        <p style="font-size:12px; line-height:1.5;">Les exercices de respiration contrôlée sont des outils simples et efficaces pour agir directement sur le système nerveux, favoriser la détente et améliorer la santé globale.</p>
+        
+        <h3 style="font-size:13px; margin: 15px 0 5px 0;">Utilité des exercices :</h3>
+        <ul style="font-size:11px; line-height:1.5; padding-left:18px;">
+            <li><b>Détente :</b> Le plus efficace pour ralentir le rythme cardiaque et stimuler le nerf vague.</li>
+            <li><b>Soupir :</b> Réinitialisation rapide du système en cas de palpitations ou de stress aigu.</li>
+            <li><b>Cohérence :</b> Stabilise et équilibre les émotions sur le long terme au quotidien.</li>
+            <li><b>4-7-8 :</b> Agit comme un sédatif naturel pour faciliter un endormissement rapide.</li>
+            <li><b>Box :</b> Augmente la clarté mentale, le focus et la concentration.</li>
+            <li><b>Box Pro :</b> Version intense pour renforcer le contrôle de soi et la capacité respiratoire.</li>
+        </ul>
+
+        <div class="alert-box">
+            <b>NOTE DE SÉCURITÉ :</b><br>
+            Cette application est un guide de bien-être. Elle ne remplace pas l'avis d'un médecin. <b>En cas d'arythmie cardiaque ou de vertiges, consultez un professionnel de santé.</b>
+        </div>
+    </div>
+</div>
+
+<audio id="bell-main" src="bell_main.mp3"></audio>
+<audio id="bell-hold" src="bell_hold.wav"></audio>
+
+<script>
+    let isRunning = false, currentMode = 'detente', timeLeft = 300, timer, cycle;
+    const modes = { 
+        'detente': [4,0,8,0], 'sigh': [3,1,6,0], 'coherence': [5,0,5,0], 
+        '478': [4,7,8,0], 'carree': [4,4,4,4], 'boxpro': [6,6,6,6]
+    };
+
+    const circle = document.getElementById('circle'), inst = document.getElementById('instruction');
+
+    function toggleModal(show) { document.getElementById('modal').style.display = show ? 'flex' : 'none'; }
+
+    document.getElementById('slider').oninput = function() {
+        if(isRunning) return;
+        document.getElementById('dur-lab').innerText = this.value + " min";
+        timeLeft = this.value * 60;
+        updateTimer();
+    };
+
+    function setMode(m, btn) {
+        if(isRunning) return;
+        currentMode = m;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function updateTimer() {
+        let m = Math.floor(timeLeft/60), s = timeLeft%60;
+        document.getElementById('timer-display').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }
+
+    function play(type) {
+        if(!document.getElementById('sound-on').checked) return;
+        let s = document.getElementById(type === 'main' ? 'bell-main' : 'bell-hold');
+        s.currentTime = 0; s.play().catch(()=>{});
+    }
+
+    async function step(txt, dur, sc, snd, bg) {
+        if(!isRunning) return;
+        inst.innerText = txt;
+        document.body.style.background = bg;
+        circle.style.transition = `transform ${dur}s linear`;
+        circle.style.transform = `scale(${sc})`;
+        if(snd) play(snd);
+        await new Promise(r => cycle = setTimeout(r, dur * 1000));
+    }
+
+    async function run() {
+        while(isRunning) {
+            const c = modes[currentMode];
+            let labelInsp = (currentMode === 'sigh') ? "DOUBLE INSPIREZ" : "INSPIREZ";
+            
+            await step(labelInsp, c[0], 2.0, 'main', 'var(--bg-inspire)');
+            if(c[1]>0) await step('BLOQUEZ', c[1], 2.0, 'hold', 'var(--bg-inspire)');
+            await step('EXPIREZ', c[2], 0.8, 'main', 'var(--bg-expire)');
+            if(c[3]>0) await step('BLOQUEZ', c[3], 0.8, 'hold', 'var(--bg-expire)');
+        }
+    }
+
+    function toggle() {
+        isRunning = !isRunning;
+        if(isRunning) {
+            document.getElementById('start-btn').innerText = "ARRÊTER";
+            document.getElementById('panel').style.opacity = "0.2";
+            document.getElementById('panel').style.pointerEvents = "none";
+            timer = setInterval(() => { timeLeft--; updateTimer(); if(timeLeft<=0) toggle(); }, 1000);
+            run();
+        } else {
+            clearInterval(timer); clearTimeout(cycle);
+            document.getElementById('start-btn').innerText = "DÉMARRER";
+            document.getElementById('panel').style.opacity = "1";
+            document.getElementById('panel').style.pointerEvents = "auto";
+            inst.innerText = "Prêt ?";
+            circle.style.transform = "scale(1)";
+            document.body.style.background = "var(--bg-inspire)";
+            timeLeft = document.getElementById('slider').value * 60;
+            updateTimer();
+        }
+    }
+</script>
+</body>
+</html>
