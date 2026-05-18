@@ -2,6 +2,7 @@ const CACHE_NAME = 'respiro-cache-v1';
 const ASSETS = [
   './',
   './index.html',
+  ./index-en.html
   './manifest.json',
   './favicon.png',
   './apple-touch-icon.png',
